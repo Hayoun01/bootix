@@ -55,3 +55,10 @@ void read(char *buff, uint32_t len){
 	}
 	buff[i] = '\0';
 }
+
+void write(void *buf, uint32_t nbyte){
+	uint32_t i = 0;
+	while (i < nbyte){
+		putchar(*((char *) buf + i));
+	}
+}

@@ -57,6 +57,23 @@ void printf(char *fmt, ...) {
 		if (fmt[i] == '%')
 			fmt_handle(fmt[++i], &args);
 		else
+			putchar(fmt[i]); 
+		if (fmt[i] != '\x00')
+			i++;
+	}
+	va_end(args);
+}
+
+void vprintf(char *fmt, va_list args) {
+ 	int		i;
+
+	va_start(args, fmt);
+	i = 0;
+	while (fmt[i] != '\x00')
+	{
+		if (fmt[i] == '%')
+			fmt_handle(fmt[++i], &args);
+		else
 			putchar(fmt[i]);
 		if (fmt[i] != '\x00')
 			i++;

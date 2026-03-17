@@ -6,7 +6,7 @@ static void bios_interrupt(bios_regs* regs) {
 	prot_to_real();	
 }
 
-void	read_sector_lba(char *buffer, uint16_t sectors, uint32_t lba){
+void	read_sector_lba(void *buffer, uint16_t sectors, uint32_t lba){
 	dap	cdap = {
 		.size = 0x10,
 		.reserv = 0,
@@ -21,7 +21,7 @@ void	read_sector_lba(char *buffer, uint16_t sectors, uint32_t lba){
 	memset(&ctx, 0, sizeof(bios_regs));
 	ctx.edx = boot_drive;
 	ctx.esi = (uint16_t) &cdap;
-	ctx.eax = 0x42;
+	ctx.eax = 0x4200;
 	ctx.intno = 0x13;
 	bios_interrupt(&ctx);
 }

@@ -1,7 +1,11 @@
 #ifndef INT_H
 #define INT_H
 
-extern uint8_t boot_drive;
+
+
+#define FILE_BUFF	0x9a00
+#define FILE_BUFF_SIZE	512
+#define SECTOR_SIZE	512
 
 typedef struct bios_regs{
 	uint16_t	eax;
@@ -21,9 +25,10 @@ typedef struct dap {
 	uint16_t	segment;
 	uint32_t	lba_low;
 	uint32_t	lba_high;
+}  __attribute__((packed)) dap;
 
-} dap;
+extern uint8_t boot_drive;
 
-void	read_sector_lba(char *buffer, uint16_t sectors, uint32_t lba);
+void	read_sector_lba(void *buffer, uint16_t sectors, uint32_t lba);
 
 #endif

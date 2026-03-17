@@ -98,8 +98,6 @@ rmode_call:
 	add esi, int_table                   ; add base address
 	mov [int_call], esi
 
-
-
 	mov eax, [edi + BIOS_EAX]	;; restoring the registers
 	mov ebx, [edi + BIOS_EBX]	;; restoring the registers
 	mov ecx, [edi + BIOS_ECX]	;; restoring the registers
@@ -110,9 +108,6 @@ rmode_call:
 
 	call [int_call]                 ;; indirect call
 
-	; mov ah, 0x0;
-	; mov al, 0x03;
-	; int 0x10
 	jmp prot_end;
 
 prot_end:
@@ -188,7 +183,4 @@ saved_esp:        resd 1
 bootix_stack_bottom: equ $
 	resb 16384 ; 16 KB
 bootix_stack_top:
-
-
-
 

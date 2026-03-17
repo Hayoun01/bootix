@@ -1,7 +1,7 @@
 #include "../inc/bootix.h"
 
 ///////////////////////////  DBG  ///////////////////////////
-#ifdef DBG
+#ifdef DBGX
 static void print_partition(partition_table *ptbl){
 	puts("[PARTITION TABLE]");
 	printf("\tboot_indicator %d\n", ptbl->boot_indicator);
@@ -34,32 +34,54 @@ void init_partable(partition_table *ptbl, void *ptbl_addr){
 	ptbl->sectors        = *(uint32_t*)(raw + 12);
 }
 
-void extended_parts(partition_table *ext, partition_table **parts, uint32_t it){
+void extended_boot_records(partition_table **parts, uint32_t it){
 
 }
 
 partition_table **detect_partitions(){
 	// iterating over all the partition tables
-	partition_table **parts = malloc(sizeof(partition_table) * 0x20);
-	memset(parts, 0, sizeof(partition_table) * 0x20);
+	partition_table **parts = malloc(sizeof(partition_table) * (PART_MAX + 1));
+	memset(parts, 0, sizeof(partition_table) * (PART_MAX + 1));
 
 
 	int i = -1;
 	while (++i < 4){
 		parts[i] = malloc(sizeof(partition_table));
 		init_partable(parts[i], (void *) PARTABLE_LOC + (16 * i));
-		if (parts[i]->sys_id == 5){
-			// handle extended partitions here
+		// including extended partitions
+		if (parts[i]->sys_id == SYS_EXT_CHS || parts[i]->sys_id == SYS_EXT_LBA){
+			extended_boot_records(parts, i);
 		}
-#ifdef DBG
+#ifdef DBGX
 		print_partition(parts[i]);
 #endif
 	}
+	return (parts);
+}
+
+static void load_config(partition_table *bootable){
+	log(DBG, "Loading partition in lba %p\n", bootable->lba);
+	fat32_obj *fs_info = fat32_init(bootable);
 
 }
 
 void multiboot(){
 	partition_table **parts = detect_partitions();
-	char buff[512];
-	read_sector_lba(buff, 1, parts[0]->lba);
+	uint8_t		i = 0;
+	
+	// finding the first bootable partition
+	while (i < PART_MAX){
+		if (parts[i] == NULL || parts[i]->boot_indicator == 0x80)
+			break;
+		i++;
+	}
+	// paranoia check
+	if (parts[i] == NULL){
+		log(ERR, "Cannot find bootable partition");
+	}
+	if (parts[i]->sys_id != SYS_FAT32_CHS && parts[i]->sys_id != SYS_FAT32_LBA ){
+		log(ERR, "Bootable partition is not fat32, reinstall bootix or fix manually");
+	}
+	log(DBG, "Loading config file from first bootable partition");
+	load_config(parts[i]);
 }

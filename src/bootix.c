@@ -5,10 +5,14 @@ void version(){
 	puts("--- An experimental bootloader ---");
 }
 
+void hang(void){
+	while (true);
+}
 
 int boot_main(void){
 	version();
+	log(DBG, "Searching for boot partitions");
 	multiboot();
-	while (true);			// delete me later
+	hang();
 	return (0);
 }

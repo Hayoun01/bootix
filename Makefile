@@ -7,7 +7,8 @@ QEMU = qemu-system-x86_64
 NAME = bootix.img
 S2NAME = env/stage2.bin
 
-CSRC = src/bootix.c src/io.c src/fmt.c src/alloc.c src/mbr.c src/string.c src/int.c
+CSRC = src/bootix.c src/io.c src/fmt.c src/alloc.c src/mbr.c src/string.c \
+       src/int.c src/fat32.c src/log.c src/time.c
 BOOT_SRC = src/boot.s
 S2_SRC = src/entry.s
 
@@ -35,7 +36,9 @@ stage1:
 
 stage2:
 	$(ASM) -f elf $(S2_SRC) -o $(STAGE2)
-	$(CC) $(CSRC) $(STAGE2) -o $(S2NAME) $(CFLAGS)
+	# $(CC) $(CSRC) $(STAGE2) -o $(S2NAME) $(CFLAGS)
+	$(CC) $(CSRC) $(STAGE2) -o build/stage2.elf $(CFLAGS) 
+	objcopy -O binary build/stage2.elf $(S2NAME)
 
 img: stage1 stage2
 	dd if=/dev/zero of=$(NAME) bs=$(SIZE) count=1
@@ -50,7 +53,8 @@ run: build stage1 img
 	$(QEMU) -nographic -serial mon:stdio -drive format=raw,file=$(NAME)
 
 dbg: build stage1 img
-	$(QEMU) -nographic -serial mon:stdio -drive format=raw,file=$(NAME) -s -S
+	# $(QEMU) -nographic -serial mon:stdio -drive format=raw,file=$(NAME) -s -S
+	qemu-system-i386 -nographic -serial mon:stdio -drive format=raw,file=$(NAME) -s -S
 
 
 # cleaner

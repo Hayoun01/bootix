@@ -11,7 +11,8 @@
 #define SYS_FAT32_CHS	0xb
 #define SYS_FAT32_LBA	0xc
 
-#define SYS_EXTENDED	0x5
+#define SYS_EXT_CHS	0x5
+#define SYS_EXT_LBA	0xf
 
 typedef struct partition_table {
 	uint8_t		boot_indicator;

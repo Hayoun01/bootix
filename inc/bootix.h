@@ -1,10 +1,10 @@
 #ifndef BOOTIX_H
 #define BOOTIX_H
 
+#define DBGX			// DELETE ME IF YOU DON'T WANT DEBUG MSGS
 #include <stdint.h>
 #include <stdbool.h>
 
-#define DBG
 #define SERIAL_PORT	0x3F8
 #define NULL		0
 #define VERSION		"0.1 [Not Tested]"
@@ -17,17 +17,23 @@ typedef char* va_list;
 #define va_end(ap)          ( (void)0 )
 
 // other incs
-#include "fat32.h"
 #include "mbr.h"
 #include "alloc.h"
 #include "int.h"
+#include "fat32.h"
+#include "log.h"
+#include "time.h"
 
+
+void hang(void);
 
 // io.c
 void putchar(char c);
 void puts(const char* str);
 void print(const char *str);
 void read(char *buff, uint32_t len);
+void write(void *buf, uint32_t nbyte);
+void vprintf(char *fmt, va_list args);
 
 // fmt
 void printf(char *fmt, ...);
