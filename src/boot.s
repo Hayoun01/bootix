@@ -130,7 +130,7 @@ read_stage_2:
 	mov [dap.lba_low + 2], ax
 
 
-	mov word[dap.count], 15		;; reading 10 sectors
+	mov word[dap.count], 20		;; reading 10 sectors
 	mov word[dap.offset], 0x7c00	;; stage 2 will be loaded in 0x0000:0x7c00
 	mov word[dap.segment], 0x0
 

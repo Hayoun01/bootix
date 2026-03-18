@@ -8,7 +8,7 @@ NAME = bootix.img
 S2NAME = env/stage2.bin
 
 CSRC = src/bootix.c src/io.c src/fmt.c src/alloc.c src/mbr.c src/string.c \
-       src/int.c src/fat32.c src/log.c src/time.c
+       src/int.c src/fat32.c src/log.c src/time.c src/conf.c
 BOOT_SRC = src/boot.s
 S2_SRC = src/entry.s
 

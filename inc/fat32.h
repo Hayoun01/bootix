@@ -39,8 +39,7 @@ typedef struct fat32_bpb{
 } __attribute__((packed)) fat32_bpb;
 
 typedef struct fat32_dir_entry{
-	uint8_t 	filename[8];
-	uint8_t 	fileext[3];
+	char 		filename[11];
 	uint8_t 	attr;           	// file attributes (fat32_dir_attr)
 	uint8_t 	nt_reserved;    	// reserved for NT
 	uint8_t 	creation_tenths; 	// creation time (tenths of sec)
@@ -72,5 +71,7 @@ typedef enum fat32_dir_attr {
 } fat32_dir_attr;
 
 fat32_obj *fat32_init(partition_table *bootable);
+char *fat32_read(char *filename, fat32_obj *fs, fat32_dir_entry *dentry);
+void *fat32_obj_free(fat32_obj *fs);
 
 #endif

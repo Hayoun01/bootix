@@ -6,7 +6,7 @@ static uint32_t cluster_to_lba(uint32_t cluster, fat32_obj *fs_info){
 
 #ifdef DBGX
 void print_dir_entry(fat32_dir_entry *dir){
-	puts("[A fucking FAT32 dir entry]");
+	puts("[FAT32 rootdir entry]");
 	printf("-> filename: %s\n", dir->filename);
 	printf("-> creation time: %d / creation date: %d\n", dir->creation_time, dir->creation_date);
 	printf("-> access date: %d\n", dir->access_date);
@@ -25,8 +25,8 @@ fat32_dir_entry *fat32_open_dir(fat32_obj *fs, uint32_t cluster){
 
 	// TODO: FUCKING FIX ME
 	while (*buffptr != '\0'){
-		memcpy(idir, buffptr, sizeof(fat32_dir_entry) - sizeof(fat32_dir_entry));
-		buffptr += sizeof(fat32_dir_entry) - sizeof(fat32_dir_entry);
+		memcpy(idir, buffptr, sizeof(fat32_dir_entry) - sizeof(fat32_dir_entry *));
+		buffptr += sizeof(fat32_dir_entry) - sizeof(fat32_dir_entry *);
 		print_dir_entry(idir);
 		if (*buffptr == '\0' || *buffptr == '\xe5'){
 			idir->next = NULL;
@@ -36,8 +36,53 @@ fat32_dir_entry *fat32_open_dir(fat32_obj *fs, uint32_t cluster){
 		idir = idir->next;
 	}
 
-	print_dir_entry((fat32_dir_entry *)buffer);
 	return (NULL);
+}
+
+uint32_t fat32_filenamecmp(char *f32, char *fn){
+	uint8_t i = 0;
+	while (*f32 != '\0' && *fn != '\0' && i < 10){
+		// checking here for ext and skipping whitespaces
+		if (*fn == '.' && *f32 == ' '){
+			fn++;			// skipping the '.'
+			while(*f32 == ' ') {
+				f32++;
+				i++;
+			}
+		}
+		if (*f32 != upper(*fn)){
+			return (*f32 - *fn);
+		}
+		f32++;
+		fn++;
+		i++;
+	}
+	return (*f32 - upper(*fn));
+}
+
+uint32_t fat32_dir_cluster(fat32_dir_entry *dir){
+	if (dir == NULL)
+		return (0);
+	return ((dir->first_cluster_hi << (8*2)) | dir->first_cluster_lo);
+}
+
+// opens and read file
+char *fat32_read(char *filename, fat32_obj *fs, fat32_dir_entry *dentry){
+	char *content = NULL; 
+	uint32_t sectors = 0;
+
+	while (dentry != NULL){
+		if (fat32_filenamecmp(dentry->filename, filename) == 0)
+			break;
+		dentry = dentry->next;
+	}
+	if (dentry == NULL)
+		return (NULL);
+	content = malloc(dentry->file_size);
+	memset(content, '\x00', dentry->file_size);
+	// reading the content of the file
+	read_size_lba(content, dentry->file_size, cluster_to_lba(fat32_dir_cluster(dentry), fs));
+	return (content);
 }
 
 fat32_obj *fat32_init(partition_table *bootable){
@@ -49,15 +94,20 @@ fat32_obj *fat32_init(partition_table *bootable){
 	fs_info->cluster_beg = fs_info->fat_beg +
 		(fs_info->volid->BPB_NumFATs * fs_info->volid->BPB_FATSz32);
 	fs_info->rootdir = fat32_open_dir(fs_info, fs_info->volid->BPB_RootClus);
-	
-	
-
-
+	if (fs_info->rootdir == NULL){
+		log(ERR, "No config file is found on bootable directory, please run os-probe to generate one");
+	}
 	return (fs_info);
 }
 
 void *fat32_obj_free(fat32_obj *fs){
+	fat32_dir_entry *dentry = fs->rootdir;
+	// freeing rootdir entries lol
+	while (dentry != NULL){
+		free(dentry);
+	}
 	free(fs->volid);
 	free(fs);
+
 	return (NULL);
 }

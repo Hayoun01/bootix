@@ -12,7 +12,7 @@ void hang(void){
 int boot_main(void){
 	version();
 	log(DBG, "Searching for boot partitions");
-	multiboot();
+	// multiboot();
 	hang();
 	return (0);
 }

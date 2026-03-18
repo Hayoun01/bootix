@@ -25,3 +25,12 @@ void	read_sector_lba(void *buffer, uint16_t sectors, uint32_t lba){
 	ctx.intno = 0x13;
 	bios_interrupt(&ctx);
 }
+
+void	read_size_lba(void *buffer, uint32_t size, uint32_t lba){
+	uint32_t sectors = ((uint32_t)(size / 512)) + 1;
+	char *sectors_buff = malloc(sectors * 512);
+	read_sector_lba(sectors_buff, sectors, lba);
+	memcpy(buffer, sectors_buff, size);
+	((char *)buffer)[size] = '\x00';
+	free(sectors_buff);
+}

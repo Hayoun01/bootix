@@ -30,5 +30,6 @@ typedef struct dap {
 extern uint8_t boot_drive;
 
 void	read_sector_lba(void *buffer, uint16_t sectors, uint32_t lba);
+void	read_size_lba(void *buffer, uint32_t size, uint32_t lba);
 
 #endif
