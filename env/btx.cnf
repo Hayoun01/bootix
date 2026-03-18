@@ -9,7 +9,7 @@ insmod = part_msdos
 	initrd = "/intel-ucode.img /initramfs-linux.img"
 
 # an average windows partition 
-[Win]
-	name = "Windows 11"
-	bootsplash = True
-	chainload = False
+# [Win]
+# 	name = "Windows 11"
+# 	bootsplash = True
+# 	chainload = False

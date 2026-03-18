@@ -194,3 +194,28 @@ void cnf_free(cnf_namespace *ns){
 		ns = next_ns;
 	}
 }
+
+// other utils
+cnf_namespace *cnf_clone(cnf_namespace *ns){
+	cnf_namespace *clone = malloc(sizeof(cnf_namespace));
+
+	clone->ns = strdup(ns->ns);
+	clone->next = NULL;
+
+	// cloning entries
+	cnf_entry *en = ns->entry;
+	clone->entry = malloc(sizeof(cnf_entry));
+	cnf_entry *cen = clone->entry;
+	while (en != NULL){
+		cen->key = strdup(en->key);
+		cen->val = strdup(en->key);
+		if (en->next != NULL)
+			cen->next = malloc(sizeof(cnf_entry));
+		else 
+			cen->next = NULL;
+		cen = cen->next;
+		en = en->next;
+	}
+	
+	return (clone);
+}

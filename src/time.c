@@ -65,3 +65,10 @@ uint32_t get_unix_timestamp(void) {
 	uint16_t year = 2000 + year_bcd;
 	return date_to_unix(year, mon_bcd, day_bcd, hour_bcd, min_bcd, sec_bcd);
 }
+
+void sleep_seconds(uint32_t seconds) {
+    uint32_t start = get_unix_timestamp();
+    while (get_unix_timestamp() - start < seconds) {
+        __asm__ volatile ("pause");
+    }
+}

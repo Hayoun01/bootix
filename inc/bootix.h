@@ -1,7 +1,7 @@
 #ifndef BOOTIX_H
 #define BOOTIX_H
 
-#define DBGX			// DELETE ME IF YOU DON'T WANT DEBUG MSGS
+// #define DBGX			// DELETE ME IF YOU DON'T WANT DEBUG MSGS
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -24,6 +24,7 @@ typedef char* va_list;
 #include "log.h"
 #include "time.h"
 #include "conf.h"
+#include "boot.h"
 
 
 void hang(void);
@@ -40,6 +41,7 @@ void vprintf(char *fmt, va_list args);
 void printf(char *fmt, ...);
 
 // string functions
+int32_t atoi(char *s);
 void memcpy(void *dst, void *src, uint32_t n);
 void memset(void *s, uint8_t c, uint32_t n);
 char upper(char c);

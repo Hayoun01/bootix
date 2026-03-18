@@ -23,11 +23,12 @@ fat32_dir_entry *fat32_open_dir(fat32_obj *fs, uint32_t cluster){
 	fat32_dir_entry *dir = idir;
 	read_sector_lba(buffer, 1, cluster_to_lba(cluster, fs));
 
-	// TODO: FUCKING FIX ME
 	while (*buffptr != '\0'){
 		memcpy(idir, buffptr, sizeof(fat32_dir_entry) - sizeof(fat32_dir_entry *));
 		buffptr += sizeof(fat32_dir_entry) - sizeof(fat32_dir_entry *);
+#ifdef DBGX
 		print_dir_entry(idir);
+#endif
 		if (*buffptr == '\0' || *buffptr == '\xe5'){
 			idir->next = NULL;
 			return (dir);

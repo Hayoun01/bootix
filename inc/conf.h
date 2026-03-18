@@ -17,6 +17,7 @@ cnf_namespace	*cnf_parse(char *cnf);
 cnf_namespace	*cnf_search_namespace(cnf_namespace *ns, char *dns);
 void cnf_free(cnf_namespace *ns);
 cnf_entry	*cnf_search_entries(cnf_entry *entries, char *dentry);
+cnf_namespace *cnf_clone(cnf_namespace *ns);
 
 
 #endif

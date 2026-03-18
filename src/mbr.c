@@ -34,29 +34,29 @@ void init_partable(partition_table *ptbl, void *ptbl_addr){
 	ptbl->sectors        = *(uint32_t*)(raw + 12);
 }
 
-void extended_boot_records(partition_table **parts, uint32_t it){
+void extended_boot_records(partition_table **fs, uint32_t it){
 
 }
 
 partition_table **detect_partitions(){
 	// iterating over all the partition tables
-	partition_table **parts = malloc(sizeof(partition_table) * (PART_MAX + 1));
-	memset(parts, 0, sizeof(partition_table) * (PART_MAX + 1));
+	partition_table **fs = malloc(sizeof(partition_table) * (PART_MAX + 1));
+	memset(fs, 0, sizeof(partition_table) * (PART_MAX + 1));
 
 
 	int i = -1;
 	while (++i < 4){
-		parts[i] = malloc(sizeof(partition_table));
-		init_partable(parts[i], (void *) PARTABLE_LOC + (16 * i));
+		fs[i] = malloc(sizeof(partition_table));
+		init_partable(fs[i], (void *) PARTABLE_LOC + (16 * i));
 		// including extended partitions
-		if (parts[i]->sys_id == SYS_EXT_CHS || parts[i]->sys_id == SYS_EXT_LBA){
-			extended_boot_records(parts, i);
+		if (fs[i]->sys_id == SYS_EXT_CHS || fs[i]->sys_id == SYS_EXT_LBA){
+			extended_boot_records(fs, i);
 		}
 #ifdef DBGX
-		print_partition(parts[i]);
+		print_partition(fs[i]);
 #endif
 	}
-	return (parts);
+	return (fs);
 }
 
 static cnf_namespace *load_config(partition_table *bootable){
@@ -73,30 +73,76 @@ static cnf_namespace *load_config(partition_table *bootable){
 	return (cnf);
 	
 }
-// void display_menu(cnf_namespace *cnf){
-// 	puts("this is a display menu");
-// }
+
+cnf_namespace *boot_menu(cnf_namespace *cnf){
+	uint32_t i = 0;
+	cnf_namespace	*cnfit = cnf;
+	char buff[8];
+	uint32_t num = -1;
+	// quick sanity check to multi boot
+	while (cnfit != NULL){
+		cnfit = cnfit->next;
+		i++;
+	}
+	if (i < 2)
+		return cnf;
+
+
+	i = 0;
+	cnfit = cnf;
+	while (cnfit != NULL){
+		printf("[%d] - %s\n",i++, cnfit->ns);
+		cnfit = cnfit->next;
+	}
+
+
+	while (true){
+		printf("Chose an operating system to boot from [0-%d] >> ", i-1);
+		memset(buff, '\x00' , 8);
+		read(buff, 7);
+		num = atoi(buff);
+		if (num > i || num < 0){
+			printf("Invalid entry\n");
+		} else {
+			break;
+		}
+	}
+	i = 0;
+	cnfit = cnf;
+	while (i < num){
+		cnfit = cnfit->next;
+		i++;
+	}
+
+	return (cnfit);
+}
 
 void multiboot(){
-	partition_table **parts = detect_partitions();
+	partition_table **fs = detect_partitions();
 	uint8_t		i = 0;
 	cnf_namespace	*cnf;
+	cnf_namespace	*os;
 	
 	// finding the first bootable partition
 	while (i < PART_MAX){
-		if (parts[i] == NULL || parts[i]->boot_indicator == 0x80)
+		if (fs[i] == NULL || fs[i]->boot_indicator == 0x80)
 			break;
 		i++;
 	}
 	// paranoia check
-	if (parts[i] == NULL){
+	if (fs[i] == NULL){
 		log(ERR, "Cannot find bootable partition");
 	}
-	if (parts[i]->sys_id != SYS_FAT32_CHS && parts[i]->sys_id != SYS_FAT32_LBA ){
+	if (fs[i]->sys_id != SYS_FAT32_CHS && fs[i]->sys_id != SYS_FAT32_LBA ){
 		log(ERR, "Bootable partition is not fat32, reinstall bootix or fix manually");
 	}
 	log(DBG, "Loading config file from first bootable partition");
-	cnf = load_config(parts[i]);
-	// display_menu(cnf);
-	
+	cnf = load_config(fs[i]);
+	if (cnf->next == NULL || cnf->next->ns == NULL)
+		log(ERR, "No bootable operating system to boot from.");
+	os = boot_menu(cnf->next);
+	os = cnf_clone(os);
+	cnf_free(cnf->next);				// freeing other entries
+	cnf->next = os;					// saving os env with default
+	boot(cnf, fs);
 }

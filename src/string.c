@@ -70,3 +70,25 @@ char upper(char c){
 	}
 	return (c);
 }
+
+int isdigit(int c) {
+	return (c >= '0' && c <= '9');
+}
+
+int32_t atoi(char *s) {
+	int32_t i = 0;
+	int8_t sign = 1;
+	int32_t nbr = 0;
+
+	while (s[i] == ' ' || s[i] == '\t' || s[i] == '\n' || s[i] == '\r')
+		i++;
+	if (s[i] == '-')
+		sign = -1;
+	if (s[i] == '-' || s[i] == '+')
+		i++;
+	while (isdigit(s[i])) {
+		nbr = nbr * 10 + (s[i] - '0');
+		i++;
+	}
+	return (nbr * sign);
+}
