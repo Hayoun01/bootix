@@ -44,8 +44,9 @@ uint32_t fat32_filenamecmp(char *f32, char *fn){
 	uint8_t i = 0;
 	while (*f32 != '\0' && *fn != '\0' && i < 10){
 		// checking here for ext and skipping whitespaces
-		if (*fn == '.' && *f32 == ' '){
-			fn++;			// skipping the '.'
+		if (*fn == '.' || *f32 == ' '){
+			if (*fn == '.')
+				fn++;			// skipping the '.'
 			while(*f32 == ' ') {
 				f32++;
 				i++;
@@ -58,6 +59,8 @@ uint32_t fat32_filenamecmp(char *f32, char *fn){
 		fn++;
 		i++;
 	}
+	if (*f32 == ' ')
+		*f32 = 0x0;
 	return (*f32 - upper(*fn));
 }
 
@@ -68,7 +71,7 @@ uint32_t fat32_dir_cluster(fat32_dir_entry *dir){
 }
 
 // opens and read file
-char *fat32_read(char *filename, fat32_obj *fs, fat32_dir_entry *dentry){
+char *fat32_read(char *filename, fat32_obj *fs, fat32_dir_entry *dentry, uint32_t size, uint32_t offset){
 	char *content = NULL; 
 	uint32_t sectors = 0;
 
@@ -79,10 +82,12 @@ char *fat32_read(char *filename, fat32_obj *fs, fat32_dir_entry *dentry){
 	}
 	if (dentry == NULL)
 		return (NULL);
-	content = malloc(dentry->file_size);
-	memset(content, '\x00', dentry->file_size);
+	if (size == 0)				// read the whole file
+		size = dentry->file_size;
+	content = malloc(size);
+	memset(content, '\x00', size);
 	// reading the content of the file
-	read_size_lba(content, dentry->file_size, cluster_to_lba(fat32_dir_cluster(dentry), fs));
+	read_size_lba(content, size, cluster_to_lba(fat32_dir_cluster(dentry), fs) + offset);
 	return (content);
 }
 

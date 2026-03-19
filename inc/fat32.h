@@ -71,7 +71,7 @@ typedef enum fat32_dir_attr {
 } fat32_dir_attr;
 
 fat32_obj *fat32_init(partition_table *bootable);
-char *fat32_read(char *filename, fat32_obj *fs, fat32_dir_entry *dentry);
+char *fat32_read(char *filename, fat32_obj *fs, fat32_dir_entry *dentry, uint32_t size, uint32_t offset);
 void *fat32_obj_free(fat32_obj *fs);
 
 #endif

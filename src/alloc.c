@@ -63,8 +63,8 @@ void free(void *p) {
 	chunk *next = (chunk *)((char*)victim + victim_size);
 
 	if (next == arena->wild) {
+		victim->size = victim_size + sizenomask(arena->wild->size);
 		arena->wild = victim;
-		arena->wild->size = victim_size + (sizenomask(arena->wild->size) | (victim->size & PREV_MASK));
 		return;
 	}
 	

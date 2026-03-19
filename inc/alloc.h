@@ -6,8 +6,8 @@
 #include <stddef.h>
 
 // some heap definitions
-#define HEAP_START	0xe000
-#define HEAP_SIZE	0x1000
+#define HEAP_START	0x200000
+#define HEAP_SIZE	0x4000
 #define HEAP_END	HEAP_START+HEAP_SIZE
 
 #define BINS		100

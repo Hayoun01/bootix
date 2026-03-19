@@ -3,7 +3,7 @@
 
 
 
-#define FILE_BUFF	0x9a00
+#define FILE_BUFF	0xa000
 #define FILE_BUFF_SIZE	512
 #define SECTOR_SIZE	512
 

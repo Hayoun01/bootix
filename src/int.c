@@ -7,12 +7,16 @@ static void bios_interrupt(bios_regs* regs) {
 }
 
 void	read_sector_lba(void *buffer, uint16_t sectors, uint32_t lba){
+	uint32_t	i = 0;
+	uint32_t	clba = lba;
+	char		*buffptr = (char *) buffer;
+	char		rbuff[512];		// realmode seg buffer
 	dap	cdap = {
 		.size = 0x10,
 		.reserv = 0,
-		.count = sectors,
-		.offset = (((uint32_t) buffer) & 0xffff),
-		.segment = ((((uint32_t) buffer) & 0xffff0000) >> (8*2)),
+		.count = 1,
+		.offset = (((uint32_t) &rbuff) & 0xffff),
+		.segment = (((((uint32_t) &rbuff) & 0xffff0000) >> (8*2))) / 16,
 		.lba_low = lba,
 		.lba_high = 0x0
 	};
@@ -23,7 +27,15 @@ void	read_sector_lba(void *buffer, uint16_t sectors, uint32_t lba){
 	ctx.esi = (uint16_t) &cdap;
 	ctx.eax = 0x4200;
 	ctx.intno = 0x13;
-	bios_interrupt(&ctx);
+
+	while (i < sectors){
+		cdap.lba_low = clba;
+		bios_interrupt(&ctx);
+		memcpy(buffptr, rbuff, 512);
+		buffptr+=512;
+		clba += 512;
+		i++;
+	}
 }
 
 void	read_size_lba(void *buffer, uint32_t size, uint32_t lba){

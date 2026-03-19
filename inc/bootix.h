@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define DBGX
 #define SERIAL_PORT	0x3F8
 #define NULL		0
 #define VERSION		"0.1 [Not Tested]"

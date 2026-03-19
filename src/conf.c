@@ -208,7 +208,7 @@ cnf_namespace *cnf_clone(cnf_namespace *ns){
 	cnf_entry *cen = clone->entry;
 	while (en != NULL){
 		cen->key = strdup(en->key);
-		cen->val = strdup(en->key);
+		cen->val = strdup(en->val);
 		if (en->next != NULL)
 			cen->next = malloc(sizeof(cnf_entry));
 		else 

@@ -7,6 +7,8 @@ insmod = part_msdos
 	name = "Arch linux"
 	bootsplash = False
 	initrd = "/intel-ucode.img /initramfs-linux.img"
+	kernel_filename = vmlinuz
+	boot_part = 0
 
 # an average windows partition 
 # [Win]

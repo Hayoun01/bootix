@@ -62,7 +62,7 @@ partition_table **detect_partitions(){
 static cnf_namespace *load_config(partition_table *bootable){
 	log(DBG, "Loading partition in lba %p\n", bootable->lba);
 	fat32_obj *fs = fat32_init(bootable);
-	char *conf_cont = fat32_read("btx.cnf", fs, fs->rootdir);
+	char *conf_cont = fat32_read("btx.cnf", fs, fs->rootdir, 0, 0);
 	cnf_namespace *cnf;
 	if (conf_cont == NULL){
 		log(ERR, "Config file (btx.cnf) not found, boot from another usb and run os-probe");
