@@ -1,5 +1,5 @@
-#ifndef BOOT_H
-#define BOOT_H
+#ifndef KBOOT_H
+#define KBOOT_H
 
 #include <stdint.h>			// please lsp just stfu
 
@@ -58,30 +58,10 @@ typedef struct linux_kernel_header {
 } __attribute__((packed)) linux_kernel_header;
 
 
-typedef struct boot_params {
-	uint8_t  screen_info[64];   // optional
-	uint8_t  apm_bios_info[20]; // optional
-	uint8_t  _pad2[4];
-	uint64_t tboot_addr;        // optional
-	uint8_t  ist_info[16];      // optional
-	uint8_t  _pad3[16];
-	uint8_t  hd0_info[16];      // optional
-	uint8_t  hd1_info[16];      // optional
-	uint8_t  sys_desc_table[16];// optional
-	uint8_t  olpc_ofw_header[16];// optional
-	uint32_t ext_ramdisk_image; // if you have an initrd
-	uint32_t ext_ramdisk_size;  // if you have an initrd
-	uint32_t ext_cmd_line_ptr;  // 64‑bit pointer to command line (if needed)
-	uint8_t  _pad4[116];
-	linux_kernel_header hdr;    // entire header
-	uint8_t  _pad5[4];
-	uint8_t  edd_mbr_sig_buffer[16];
-	uint8_t  _pad6[124];
-} __attribute__((packed)) boot_params;
-
 void boot(cnf_namespace *cnf, partition_table **fs);
 void chainload(cnf_namespace *cnf, partition_table **fs);
 extern void kchain();
 
 
 #endif
+

@@ -16,25 +16,23 @@ clear_screen:
 	int 0x10;
 	ret;
 
-real_gdt:
-    dw 0x0000, 0x0000, 0x0000, 0x0000
-    dw 0xFFFF, 0x0000, 0x9A00, 0x008F 
-real_gdt_ptr:
-    dw real_gdt_ptr - real_gdt - 1
-    dd real_gdt
-
 ; linux kernel chain
 krjmp:
 	mov eax, cr0
 	and eax, 0xfffffffe
 	mov cr0, eax
-	xor ax, ax
+	jmp 0:krinit
+
+krinit:
+	mov ax, 0x9000
 	mov ds, ax
 	mov es, ax
 	mov ss, ax
+	mov sp, 0x4000
+	xor ax, ax
 	mov fs, ax
 	mov gs, ax
-	mov sp, 0x7C00
+	cli
 	mov dl, [boot_drive] 
 	jmp 0x9000:0x0200
 
@@ -98,6 +96,15 @@ rgdt_end:
 pgdt_desc:
 	dw rgdt_end-pgdt-1
 	dd pgdt
+
+real_gdt:
+    dw 0x0000, 0x0000, 0x0000, 0x0000
+    dw 0xFFFF, 0x0000, 0x9A00, 0x008F 
+real_gdt_ptr:
+    dw real_gdt_ptr - real_gdt - 1
+    dd real_gdt
+
+
 
 rmode_stub:
 	mov eax, cr0
@@ -199,7 +206,6 @@ prot_ret:
 global kchain
 kchain:
 	cli
-	; lgdt [real_gdt_ptr]
 	mov ax, RDATA_SEG;
 	mov ds, ax;
 	mov es, ax;
@@ -217,4 +223,3 @@ saved_esp:        resd 1
 bootix_stack_bottom: equ $
 	resb 16384 ; 16 KB
 bootix_stack_top:
-

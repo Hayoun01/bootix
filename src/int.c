@@ -6,7 +6,15 @@ static void bios_interrupt(bios_regs* regs) {
 	prot_to_real();	
 }
 
-void	read_sector_lba(void *buffer, uint16_t sectors, uint32_t lba){
+void clear_screen(){
+	bios_regs	ctx = {};
+	ctx.eax = 0x3;
+	ctx.intno = 0x10;
+
+	bios_interrupt(&ctx);
+}
+
+void read_sector_lba(void *buffer, uint16_t sectors, uint32_t lba){
 	uint32_t	i = 0;
 	uint32_t	clba = lba;
 	char		*buffptr = (char *) buffer;
@@ -33,12 +41,12 @@ void	read_sector_lba(void *buffer, uint16_t sectors, uint32_t lba){
 		bios_interrupt(&ctx);
 		memcpy(buffptr, rbuff, 512);
 		buffptr+=512;
-		clba += 512;
+		clba += 1;
 		i++;
 	}
 }
 
-void	read_size_lba(void *buffer, uint32_t size, uint32_t lba){
+void read_size_lba(void *buffer, uint32_t size, uint32_t lba){
 	uint32_t sectors = ((uint32_t)(size / 512)) + 1;
 	char *sectors_buff = malloc(sectors * 512);
 	read_sector_lba(sectors_buff, sectors, lba);
@@ -46,3 +54,4 @@ void	read_size_lba(void *buffer, uint32_t size, uint32_t lba){
 	((char *)buffer)[size] = '\x00';
 	free(sectors_buff);
 }
+

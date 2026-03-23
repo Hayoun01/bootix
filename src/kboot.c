@@ -1,3 +1,4 @@
+
 #include "../inc/bootix.h"
 
 static partition_table *find_kernel_fs(cnf_namespace *cnf, partition_table **fs){
@@ -54,13 +55,13 @@ void kenv(linux_kernel_header *khdr, cnf_namespace *cnf){
 	cnf_entry * cmdline= cnf_search_entries(cnf->entry, "cmdline");
 	if (cmdline && cmdline->val){
 		khdr->cmdline_size = strlen(cmdline->val) + 1;
-		memcpy((void *)khdr->cmd_line_ptr, cmdline->val, khdr->cmdline_size);
+		memcpy((void *)khdr->cmd_line_ptr, cmdline->val, khdr->cmdline_size + 1);
 	}
 	khdr->heap_end_ptr = HEAP_END_PTR;		// CHANGE ME
 }
 
 // for now we're only working with bzlinux
-boot_params *kload(linux_kernel_header *khdr, fat32_obj *kfs, char *kfname){
+void kload(linux_kernel_header *khdr, fat32_obj *kfs, char *kfname){
 	// loading real mode code
 	if (khdr->setup_sects == 0)
 		khdr->setup_sects = 4;
@@ -71,11 +72,7 @@ boot_params *kload(linux_kernel_header *khdr, fat32_obj *kfs, char *kfname){
 	// loading compressed kernel now
 	fat32_read((void *) khdr->code32_start, kfname, kfs, kfs->rootdir, 0, (khdr->setup_sects + 1) * 512);
 	
-	// preparing the boot_params
-	boot_params *bparams = (boot_params *) 0x80000;
-	memset(bparams, 0, 0x1000);
-	memcpy(&bparams->hdr, khdr, sizeof(linux_kernel_header));	// copying the header
-	return (bparams);
+	memcpy(rload_mem + 0x1f1, khdr, sizeof(linux_kernel_header));
 }
 
 
@@ -90,7 +87,7 @@ void boot(cnf_namespace *cnf, partition_table **fs){
 	if (kfname_ent != NULL)
 		kfname = kfname_ent->val;
 
-
+	clear_screen();
 	printf("Booting from %s\n", cnf->next->ns);
 	khdr = (linux_kernel_header *) fat32_read(NULL, kfname, kfs, kfs->rootdir, 1024, 0x01f1);
 	if (khdr == NULL){
@@ -106,8 +103,9 @@ void boot(cnf_namespace *cnf, partition_table **fs){
 	kenv(khdr, cnf->next);
 
 	// env done, loading the kernel
-	boot_params* bparams = kload(khdr, kfs, kfname);
+	kload(khdr, kfs, kfname);
 
-	__asm__ volatile ("mov %0, %%esi" : : "r"(bparams));
+
 	kchain();
 }
+

@@ -96,7 +96,7 @@ char *fat32_read(char *buff, char *filename, fat32_obj *fs, fat32_dir_entry *den
 
 	uint32_t lba = cluster_to_lba(fat32_dir_cluster(dentry), fs) + (offset / 512);
 
-	read_size_lba(tmp, 512, lba);
+	read_sector_lba(tmp, 1, lba);
 
 	uint32_t first = 512 - (offset % 512);
 	if (first > size)
@@ -107,16 +107,17 @@ char *fat32_read(char *buff, char *filename, fat32_obj *fs, fat32_dir_entry *den
 	if (size > first){
 		uint32_t remain = size - first;
 		lba++;
-		if (remain <= 512){
-			read_size_lba(tmp, 512, lba);
-			memcpy(buff + first, tmp, remain);
-		} else {
-			// read full sector
-			read_size_lba(buff + first, 512, lba);
-
-			// read last partial
-			read_size_lba(tmp, 512, lba + 1);
-			memcpy(buff + first + 512, tmp, remain - 512);
+		
+		uint32_t sectors = remain / 512;
+		if (sectors > 0) {
+			read_sector_lba(buff + first, sectors, lba);
+			lba += sectors;
+		}
+		
+		uint32_t last_partial = remain % 512;
+		if (last_partial > 0) {
+			read_sector_lba(tmp, 1, lba);
+			memcpy(buff + first + (sectors * 512), tmp, last_partial);
 		}
 	}
 
@@ -151,3 +152,4 @@ void *fat32_obj_free(fat32_obj *fs){
 
 	return (NULL);
 }
+
