@@ -1,9 +1,9 @@
 #ifndef MBR_H
 #define MBR_H
 
-#define PART_MAX	0x20
+#define PART_MAX	0x50
 
-#define PARTABLE_LOC	0x6000 + 0x1be
+#define PARTABLE_PTR	0x6000 + 0x1be
 #define PARTABLE_SIZE	16
 
 
@@ -24,6 +24,7 @@ typedef struct partition_table {
 	uint16_t	end_cylinder;
 	uint32_t	lba;
 	uint32_t	sectors;
+	struct partition_table *next;
 } partition_table;
 
 

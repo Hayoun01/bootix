@@ -1,9 +1,9 @@
 
 #include "../inc/bootix.h"
 
-static partition_table *find_kernel_fs(cnf_namespace *cnf, partition_table **fs){
+static partition_table *find_kernel_fs(cnf_namespace *cnf, partition_table *fs){
 	cnf_entry	*bpartenv = cnf_search_entries(cnf->next->entry, "boot_part");
-	partition_table	**bpart = fs;
+	partition_table	*bpart = fs;
 	uint32_t	bpart_num = 0;
 	uint32_t	i = 0;
 
@@ -14,19 +14,20 @@ static partition_table *find_kernel_fs(cnf_namespace *cnf, partition_table **fs)
 	// iterating over bparts to find the right one
 	log(DBG, "Loading kernel from partition");
 
-	while (bpart[i] != NULL){
+	while (bpart != NULL && i < bpart_num){
+		bpart = bpart->next;
 		i++;
 	}
 	if (i < bpart_num){
 		log(ERR, "Bootable partition number is greater than available partitions");
 	}
 	
-	return (bpart[bpart_num]);
+	return (bpart);
 }
 
 
 // chainloading to another bootloader
-void chainload(cnf_namespace *cnf, partition_table **fs){
+void chainload(cnf_namespace *cnf, partition_table *fs){
 	// TODO
 }
 
@@ -118,7 +119,7 @@ char *kchose(cnf_namespace *cnf){
 
 
 // last step : load kernel from /boot and jump to it
-void boot(cnf_namespace *cnf, partition_table **fs){
+void boot(cnf_namespace *cnf, partition_table *fs){
 	partition_table *kpart = find_kernel_fs(cnf, fs);
 	fat32_obj *kfs = fat32_init(kpart);
 	linux_kernel_header *khdr;

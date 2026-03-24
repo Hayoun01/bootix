@@ -58,8 +58,8 @@ typedef struct linux_kernel_header {
 } __attribute__((packed)) linux_kernel_header;
 
 
-void boot(cnf_namespace *cnf, partition_table **fs);
-void chainload(cnf_namespace *cnf, partition_table **fs);
+void boot(cnf_namespace *cnf, partition_table *fs);
+void chainload(cnf_namespace *cnf, partition_table *fs);
 extern void kchain();
 
 
