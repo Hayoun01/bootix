@@ -75,10 +75,10 @@ $(ROOT_IMG):
 
 
 
-run: build stage1 img
+run: fclean build stage1 img
 	$(QEMU) -nographic -serial mon:stdio -drive format=raw,file=$(NAME)
 
-dbg: build stage1 img
+dbg: fclean build stage1 img
 	# $(QEMU) -nographic -serial mon:stdio -drive format=raw,file=$(NAME) -s -S
 	qemu-system-i386 -nographic -serial mon:stdio -drive format=raw,file=$(NAME) -s -S
 

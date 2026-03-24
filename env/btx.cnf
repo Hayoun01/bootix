@@ -3,8 +3,8 @@
 	bootsplash = False
 	initrd = "/intel-ucode.img /initramfs-linux.img"
 	kernel = vmlinuz
-	kernel = notlinux
-	kernel = windoes
+	# kernel = notlinux
+	# kernel = windoes
 	boot_part = 0
 	cmdline = "root=/dev/sda2 ro debug earlyprintk=serial,ttyS0,115200 console=tty0 console=ttyS0,115200"
 

@@ -1,0 +1,166 @@
+#!/bin/sh
+
+disks=()
+parts=()
+mount_point="/mnt/bootix"
+os_banner=""
+os_entry=""
+os_type=""
+mounted=false
+kernels=()
+
+# get_disks - searches for all disks in the system
+get_disks() {
+	echo "[+] - Probing disks" >&2 
+	
+        for dev in /sys/block/*; do
+		[ -e "$dev" ] || continue
+		name=$(basename "$dev")
+		[[ "$name" =~ ^(loop|ram|dm-) ]] && continue		# skipping loops and swaps
+		[ -L "$dev/device" ] && disks+=("$name")
+        done
+}
+
+get_disk_partitions() {
+	local disk="$1"
+	parts=()
+        local part_dir="/sys/block/$disk"
+        if [ ! -d "$part_dir" ]; then
+		echo "Disk $disk not found." >&2
+		return 1
+        fi
+        for part in "$part_dir"/*/; do
+		[ -e "$part" ] || continue
+		devpart=$(basename "$part")
+		# echo "testing /dev/$devpart"
+		if [ -e "/dev/$devpart" ]; then
+			parts+=("/dev/$devpart")
+		fi
+        done
+}
+
+detect_os() {
+        local os_version=""
+	if [ -f "$mountpoint/etc/os-release" ]; then
+		os_entry=$(grep -E '^NAME=' "$mountpoint/etc/os-release" | cut -d= -f2 | tr -d '"' | head -1)
+		os_version=$(grep -E '^VERSION_ID=' "$mountpoint/etc/os-release" | cut -d= -f2 | tr -d '"' | head -1)
+		os_type="Linux"
+		os_banner="$os_entry $os_version ($os_type)"
+	fi
+	# chceking for debian (not all of them have osrelease)
+	if [ -f "$mountpoint/etc/debian_version" ]; then
+		os_version=$(cat "$mountpoint/etc/debian_version" | head -1)
+		os_type="Linux"
+		os_banner="Debian $os_version ($os_type)"
+	fi
+	# red-hat 
+	if [ -f "$mountpoint/etc/redhat-release" ]; then
+		os_version=$(cat "$mountpoint/etc/redhat-release" | head -1)
+		os_entry="Redhat"
+		os_type="Linux"
+		os_banner="RedHat $os_version ($os_type)"
+	fi
+	# mac os booting is not supported but what if?
+	if [ -f "$mountpoint/System/Library/CoreServices/SystemVersion.plist" ]; then
+		os_entry="MacOs"
+		os_type="MacOS"
+		if command -v plutil &>/dev/null; then
+			os_version=$(plutil -p "$mountpoint/System/Library/CoreServices/SystemVersion.plist" | grep -E 'ProductVersion' | sed -E 's/.*"ProductVersion" => "([^"]+)".*/\1/')
+		else 
+			os_version="Unknown MacOs"
+		fi
+		os_banner="MacOS $os_version ($os_type)"
+	fi
+	local product_name;
+	local current_build;
+	local current_version;
+	if [ -d "$mountpoint/Windows" ] && [ -d "$mountpoint/Windows/System32" ]; then
+		## reading the version from the registry (FUCK MYLIFE)
+		if command -v chntpw &>/dev/null; then
+			local system_hive="$mountpoint/Windows/System32/config/SYSTEM"
+			local output
+			output=$(echo -e 'ls \Microsoft\Windows NT\CurrentVersion\nq' | chntpw -e "$system_hive")
+	
+			product_name=$(echo "$output" | grep -E '^ProductName' | sed -E 's/.*= (.*)/\1/' | tr -d '\r')
+			current_build=$(echo "$output" | grep -E '^CurrentBuild' | sed -E 's/.*= (.*)/\1/' | tr -d '\r')
+			current_version=$(echo "$output" | grep -E '^CurrentVersion' | sed -E 's/.*= (.*)/\1/' | tr -d '\r')
+		fi
+		os_entry="Windows $current_version"
+		os_type="Win"
+		os_banner="Windows $product_name $current_build $current_version ($os_type)"
+	fi
+}
+
+mountpart() {
+	part=$1
+	if ! [ -d "$mount_point" ]; then
+		mkdir $mount_point
+	fi
+
+	# checking if the partition is bootable or not
+	if gdisk -l $part 2>/dev/null | grep -q "MBR only"; then
+		return;
+	fi
+
+	local mount_type=""
+	mount_cmd=""
+	fstype=$(blkid -o value -s TYPE "$part" 2>/dev/null)
+	case "$fstype" in ntfs|ntfs-3g)
+		if ! command -v ntfs-3g &>/dev/null; then
+			echo "Please install ntfs-3g">&2 
+			exit
+		fi
+		mount_cmd="ntfs-3g"
+		;; 
+	vfat|fat32)
+		;; # native support
+	exfat)
+		mount_cmd="mount -t exfat"
+		;;
+	crypto_LUKS)
+		echo "Encrypted partitions $part are not supported yet, ignoring">&2  
+		return
+		;;
+	*)
+		mount_cmd="mount -t $fstype"
+		;;
+	esac
+	$mount_cmd $part $mount_point
+	mounted=true
+}
+
+umountpart() {
+	umount $mount_point
+	mounted=false
+}
+
+
+main(){
+	get_disks
+	for disk in "${disks[@]}"; do
+		echo -e "\tFound disk: $disk" >&2 
+		get_disk_partitions "nvme0n1"
+		for devpart in "${parts[@]}"; do
+			echo -e "\t\tPartiton $devpart" >&2 
+			mountpart $devpart
+			detect_os
+			echo "[$os_entry]"
+			echo -e "\tname = \"$os_banner\""
+			if [ "$os_type" = "Linux" ]; then
+				echo ok
+			elif [ "$os_type" = "Win" ]; then
+				echo -e "\tchainload=true"
+			fi
+			if [ $mounted == true ]; then 
+				umountpart
+			fi
+		done
+	done
+}
+
+if [ $(id -u) -ne 0 ]; then
+	echo "Please run as root" >&2 
+	exit
+fi
+
+main

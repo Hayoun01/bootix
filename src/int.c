@@ -14,6 +14,7 @@ void clear_screen(){
 	bios_interrupt(&ctx);
 }
 
+
 void read_sector_lba(void *buffer, uint16_t sectors, uint32_t lba){
 	uint32_t	i = 0;
 	uint32_t	clba = lba;
