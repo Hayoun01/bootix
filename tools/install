@@ -1,0 +1,85 @@
+#!/bin/sh
+
+disks=()
+parts=()
+disk_n=0
+part_n=0
+stage1="build/boot.bin"
+mount_point="/mnt/bootix_install"
+boot_files="env/btx.cnf env/stage2.bin env/vmlinuz"
+get_disks() {
+        for dev in /sys/block/*; do
+		[ -e "$dev" ] || continue
+		name=$(basename "$dev")
+		[[ "$name" =~ ^(loop|ram|dm-) ]] && continue		# skipping loops and swaps
+		[ -L "$dev/device" ] && disks+=("$name")
+        done
+}
+
+get_disk_partitions() {
+	local disk="$1"
+	parts=()
+        local part_dir="/sys/block/$disk"
+        if [ ! -d "$part_dir" ]; then
+		echo "Disk $disk not found." >&2
+		return 1
+        fi
+        for part in "$part_dir"/*/; do
+		[ -e "$part" ] || continue
+		devpart=$(basename "$part")
+		# echo "testing /dev/$devpart"
+		if [ -e "/dev/$devpart" ]; then
+			fstype=$(blkid -o value -s TYPE "/dev/$devpart" 2>/dev/null)
+			case "$fstype" in vfat|fat32)
+				parts+=("/dev/$devpart")
+				;;
+			esac
+		fi
+        done
+}
+
+install(){
+	disk=$1
+	part=$2
+	make &>/dev/null
+	dd if=$stage1 of=/dev/${disk} bs=446 count=1 conv=notrunc	# writing the bootloader
+	if ! [ -d "$mount_point" ]; then
+		mkdir $mount_point
+	fi
+	mount $part $mount_point
+	cp $boot_files $mount_point		# use normal kernels
+	umount $mount_point
+}
+
+main(){
+	get_disks;
+	echo "[+] - Locating disks"
+	i=0
+	for disk in "${disks[@]}"; do
+		echo "$i - $disk"
+		((i++))
+	done
+	read -p "Enter a disk to install bootix >> " disk_n
+	echo "[+] - Locating partitions"
+	get_disk_partitions ${disks[disk_n]};
+	i=0
+	for part in "${parts[@]}"; do
+		echo "$i - $part"
+		((i++))
+	done
+	read -p "Enter a partition to install bootix >> " part_n
+	echo "You are about to install bootix to /dev/${disks[disk_n]} (MBR) and partition ${parts[part_n]}."
+
+	read -p "Continue? (y/N) " confirm
+	case "$confirm" in
+		y|Y) install "${disks[disk_n]}" "${parts[part_n]}" ;;
+		*) echo "Aborted."; exit 0 ;;
+	esac
+}
+
+if [ $(id -u) -ne 0 ]; then
+	echo "Please run as root" >&2 
+	exit
+fi
+
+main
